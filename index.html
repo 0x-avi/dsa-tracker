@@ -1,0 +1,651 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Paytm DSA Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow reading column; sticky progress header, then tier sections of check rows. */
+:root {
+  --bg: #f5f6f9;
+  --surface: #ffffff;
+  --fg: #17202e;
+  --muted: #5d6879;
+  --line: #dfe3ea;
+  --accent: #2b59c3;
+  --accent-soft: #e4ebfa;
+  --done: #1f8a5b;
+  --done-soft: #e3f3ea;
+  --easy: #1f8a5b; --med: #b7791f; --hard: #c0392b;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141c; --surface: #161d28; --fg: #e6ebf2; --muted: #9aa5b5; --line: #273141;
+    --accent: #7ea2f0; --accent-soft: #1c2a45; --done: #4cc38a; --done-soft: #15302a;
+    --easy: #4cc38a; --med: #e0a84a; --hard: #f07b6c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141c; --surface: #161d28; --fg: #e6ebf2; --muted: #9aa5b5; --line: #273141;
+  --accent: #7ea2f0; --accent-soft: #1c2a45; --done: #4cc38a; --done-soft: #15302a;
+  --easy: #4cc38a; --med: #e0a84a; --hard: #f07b6c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+header.top .wrap { padding-block: 14px 12px; display: grid; gap: 8px; }
+.row1 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 1.45rem; margin: 0; letter-spacing: -0.01em; }
+.count { font-family: var(--mono); font-size: 0.95rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.count b { color: var(--fg); }
+.bar { height: 8px; border-radius: 4px; background: var(--accent-soft); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--done); transition: width .25s ease; }
+.controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); }
+.controls label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sync { margin-left: auto; font-size: 0.82rem; }
+.intro { color: var(--muted); margin: 20px 0 4px; max-width: 65ch; }
+section.tier { margin-top: 28px; }
+.tier-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; margin: 0; text-wrap: balance; }
+.tier-note { color: var(--muted); font-size: 0.9rem; margin: 2px 0 10px; }
+.tier-count { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 6px; font-weight: 600; }
+ul.list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+li.item { display: grid; grid-template-columns: auto 2.2rem 1fr; gap: 10px; align-items: start; padding: 11px 14px; border-top: 1px solid var(--line); }
+li.item:first-child { border-top: 0; }
+li.item.is-done { background: var(--done-soft); }
+li.item.is-done .name { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--done); }
+li.item[hidden] { display: none !important; }
+input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--done); cursor: pointer; }
+input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.body { min-width: 0; display: grid; gap: 2px; }
+.name { font-weight: 600; }
+.name a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
+.name a:hover, .name a:focus-visible { border-bottom-color: var(--accent); color: var(--accent); outline: none; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 0.85rem; color: var(--muted); }
+.lc { font-family: var(--mono); font-size: 0.8rem; }
+.diff { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; }
+.diff.E { color: var(--easy); } .diff.M { color: var(--med); } .diff.H { color: var(--hard); }
+.note { font-size: 0.88rem; color: var(--muted); }
+.cos { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.co { font-size: 0.72rem; line-height: 1.5; padding: 0 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+section.tier[hidden], h3[hidden], ul.list[hidden] { display: none !important; }
+.pace { margin-top: 32px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.pace h2 { margin-bottom: 8px; }
+.pace ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+button.reset { font: inherit; font-size: 0.85rem; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+button.reset:hover { color: var(--fg); border-color: var(--muted); }
+button.reset.armed { color: var(--hard); border-color: var(--hard); }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row1">
+      <h1>Paytm DSA Tracker</h1>
+      <span class="count"><b id="doneCount">0</b> / <span id="totalCount">62</span> done</span>
+    </div>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <div class="controls">
+      <label for="hideDone"><input type="checkbox" id="hideDone"> Hide solved</label>
+      <label for="coFilter">Company <select id="coFilter"><option value="">All</option></select></label>
+      <button type="button" class="reset" id="resetBtn">Reset all</button>
+      <span class="sync" id="syncStatus">Saved on this device</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="intro">Paytm's own repeated questions come first, ranked from about 180 interview reports (2019â€“2026). Then come Blind 75 problems, then problems asked across 25 companies (FAANG, Nvidia, OpenAI, Uber, Swiggy, Flipkart, PhonePe and more). Company tags come from 7,591 LeetCode Discuss interview posts read in Nov 2026; a missing tag means no post mentioned it, not that the company never asks it. Tap a name to open it on LeetCode.</p>
+  <div id="tiers"></div>
+</main>
+
+<script>
+const TIERS = [
+  { id: "t1", title: "Paytm Tier 1", note: "Asked across many years and still asked. Know these cold.", items: [
+    [1, [["Rotting Oranges","rotting-oranges",994,"M"]], "7 reports, 2022â€“2026"],
+    [2, [["LRU Cache","lru-cache",146,"M"]], "Full working code, then make it thread-safe"],
+    [3, [["Linked List Cycle","linked-list-cycle",141,"E"],["Linked List Cycle II","linked-list-cycle-ii",142,"M"]], "Loop length, removal, why steps 1&3 work"],
+    [4, [["Reverse Linked List","reverse-linked-list",206,"E"],["Reverse Nodes in k-Group","reverse-nodes-in-k-group",25,"H"]], "Iterative and recursive"],
+    [5, [["Trapping Rain Water","trapping-rain-water",42,"H"]], "Two-pointer, O(1) space"],
+    [6, [["Coin Change","coin-change",322,"M"]], "Explain why greedy fails, then memoise"],
+    [7, [["Search in Rotated Sorted Array","search-in-rotated-sorted-array",33,"M"]], ""],
+    [8, [["Longest Substring Without Repeating Characters","longest-substring-without-repeating-characters",3,"M"]], ""],
+    [9, [["Maximum Subarray (Kadane)","maximum-subarray",53,"M"]], ""]
+  ]},
+  { id: "t2", title: "Paytm Tier 2", note: "Current online-test patterns and frequent repeats.", items: [
+    [10, [["Maximum even-sum subsequence",null,null,"M"]], "Not on LeetCode. Sum all positives; if odd, subtract the smallest positive odd or add the largest non-positive odd, whichever is bigger"],
+    [11, [["Koko Eating Bananas","koko-eating-bananas",875,"M"]], "Asked twice in 2026"],
+    [12, [["Max Consecutive Ones III","max-consecutive-ones-iii",1004,"M"]], "The k-flips question"],
+    [13, [["Longest Palindromic Subsequence","longest-palindromic-subsequence",516,"M"]], ""],
+    [14, [["LCA of a Binary Tree","lowest-common-ancestor-of-a-binary-tree",236,"M"],["LCA of a BST","lowest-common-ancestor-of-a-binary-search-tree",235,"M"]], ""],
+    [15, [["Binary Tree Right Side View","binary-tree-right-side-view",199,"M"]], "Also practise left, top and bottom views"],
+    [16, [["Binary Tree Zigzag Level Order","binary-tree-zigzag-level-order-traversal",103,"M"]], ""],
+    [17, [["Valid Parentheses","valid-parentheses",20,"E"]], ""],
+    [18, [["Search a 2D Matrix II","search-a-2d-matrix-ii",240,"M"]], ""],
+    [19, [["Combination Sum","combination-sum",39,"M"],["Subsets","subsets",78,"M"]], ""],
+    [20, [["Insert Delete GetRandom O(1)","insert-delete-getrandom-o1",380,"M"]], ""],
+    [21, [["Find Median from Data Stream","find-median-from-data-stream",295,"H"]], ""],
+    [22, [["Course Schedule","course-schedule",207,"M"]], ""],
+    [23, [["Number of Islands","number-of-islands",200,"M"],["Max Area of Island","max-area-of-island",695,"M"]], ""],
+    [24, [["Unique Paths II","unique-paths-ii",63,"M"]], ""],
+    [25, [["All Nodes Distance K in Binary Tree","all-nodes-distance-k-in-binary-tree",863,"M"]], ""],
+    [26, [["Binary Tree Maximum Path Sum","binary-tree-maximum-path-sum",124,"H"]], ""]
+  ]},
+  { id: "t3", title: "Paytm Tier 3", note: "Asked once or twice. Quick wins.", items: [
+    [27, [["Min Stack","min-stack",155,"M"]], ""],
+    [28, [["Sort Colors","sort-colors",75,"M"]], ""],
+    [29, [["Best Time to Buy and Sell Stock","best-time-to-buy-and-sell-stock",121,"E"]], ""],
+    [30, [["Subarray Sum Equals K","subarray-sum-equals-k",560,"M"]], ""],
+    [31, [["Merge k Sorted Lists","merge-k-sorted-lists",23,"H"]], ""],
+    [32, [["Intersection of Two Linked Lists","intersection-of-two-linked-lists",160,"E"]], ""],
+    [33, [["Add Two Numbers","add-two-numbers",2,"M"]], ""],
+    [34, [["Remove Nth Node From End of List","remove-nth-node-from-end-of-list",19,"M"]], ""],
+    [35, [["Find First and Last Position in Sorted Array","find-first-and-last-position-of-element-in-sorted-array",34,"M"]], ""],
+    [36, [["Asteroid Collision","asteroid-collision",735,"M"]], "Paytm asked a circular version in 2026"],
+    [37, [["Nearest Exit from Entrance in Maze","nearest-exit-from-entrance-in-maze",1926,"M"]], ""],
+    [38, [["Longest Palindromic Substring","longest-palindromic-substring",5,"M"]], ""]
+  ]},
+  { id: "t4", title: "Blind 75 add-ons", note: "Same patterns, after the Paytm tiers.", groups: [
+    ["Arrays and hashing", [
+      [39, [["Two Sum","two-sum",1,"E"]], ""],
+      [40, [["Group Anagrams","group-anagrams",49,"M"]], "Paytm DS rounds asked anagrams twice"],
+      [41, [["Top K Frequent Elements","top-k-frequent-elements",347,"M"]], ""],
+      [42, [["Product of Array Except Self","product-of-array-except-self",238,"M"]], ""],
+      [43, [["Longest Consecutive Sequence","longest-consecutive-sequence",128,"M"]], ""]
+    ]],
+    ["Two pointers and sliding window", [
+      [44, [["3Sum","3sum",15,"M"]], ""],
+      [45, [["Container With Most Water","container-with-most-water",11,"M"]], ""],
+      [46, [["Longest Repeating Character Replacement","longest-repeating-character-replacement",424,"M"]], ""],
+      [47, [["Minimum Window Substring","minimum-window-substring",76,"H"]], ""]
+    ]],
+    ["Binary search", [
+      [48, [["Find Minimum in Rotated Sorted Array","find-minimum-in-rotated-sorted-array",153,"M"]], ""]
+    ]],
+    ["Linked list", [
+      [49, [["Merge Two Sorted Lists","merge-two-sorted-lists",21,"E"]], ""],
+      [50, [["Reorder List","reorder-list",143,"M"]], ""]
+    ]],
+    ["Trees", [
+      [51, [["Same Tree","same-tree",100,"E"],["Subtree of Another Tree","subtree-of-another-tree",572,"E"]], "Both asked at Paytm"],
+      [52, [["Validate Binary Search Tree","validate-binary-search-tree",98,"M"]], "Asked at Paytm"],
+      [53, [["Serialize and Deserialize Binary Tree","serialize-and-deserialize-binary-tree",297,"H"]], "Asked at Paytm"],
+      [54, [["Kth Smallest Element in a BST","kth-smallest-element-in-a-bst",230,"M"]], ""],
+      [55, [["Implement Trie","implement-trie-prefix-tree",208,"M"]], "Paytm asked an autocomplete question built on a trie"]
+    ]],
+    ["Dynamic programming", [
+      [56, [["House Robber","house-robber",198,"M"]], "Paytm's \"max sum, no two adjacent\", asked 3 times"],
+      [57, [["Decode Ways","decode-ways",91,"M"]], "Asked in a Paytm campus round"],
+      [58, [["Longest Increasing Subsequence","longest-increasing-subsequence",300,"M"]], ""],
+      [59, [["Longest Common Subsequence","longest-common-subsequence",1143,"M"]], ""],
+      [60, [["Word Break","word-break",139,"M"]], ""]
+    ]],
+    ["Intervals and heap", [
+      [61, [["Merge Intervals","merge-intervals",56,"M"]], "Paytm asked an interval-overlap check"],
+      [62, [["Kth Largest Element in an Array","kth-largest-element-in-an-array",215,"M"]], "Asked at Paytm in 2020"]
+    ]]
+  ]},
+  { id: "t5", title: "Wider prep: rest of Blind 75 + FAANG / Swiggy favourites", note: "Lower priority. Do these after the Paytm list to cover what other product companies ask.", groups: [
+    ["Arrays and strings", [
+      [63, [["Contains Duplicate","contains-duplicate",217,"E"]], ""],
+      [64, [["Valid Anagram","valid-anagram",242,"E"]], ""],
+      [65, [["Valid Palindrome","valid-palindrome",125,"E"]], ""],
+      [66, [["Palindromic Substrings","palindromic-substrings",647,"M"]], ""],
+      [67, [["Maximum Product Subarray","maximum-product-subarray",152,"M"]], ""],
+      [68, [["Next Permutation","next-permutation",31,"M"]], ""]
+    ]],
+    ["Matrix", [
+      [69, [["Set Matrix Zeroes","set-matrix-zeroes",73,"M"]], ""],
+      [70, [["Spiral Matrix","spiral-matrix",54,"M"]], ""],
+      [71, [["Rotate Image","rotate-image",48,"M"]], "Paytm asked matrix rotation once"],
+      [72, [["Word Search","word-search",79,"M"]], ""]
+    ]],
+    ["Stack and sliding window", [
+      [73, [["Daily Temperatures","daily-temperatures",739,"M"]], "Monotonic stack"],
+      [74, [["Largest Rectangle in Histogram","largest-rectangle-in-histogram",84,"H"]], ""],
+      [75, [["Sliding Window Maximum","sliding-window-maximum",239,"H"]], "Monotonic deque"]
+    ]],
+    ["Trees and tries", [
+      [76, [["Maximum Depth of Binary Tree","maximum-depth-of-binary-tree",104,"E"]], ""],
+      [77, [["Invert Binary Tree","invert-binary-tree",226,"E"]], ""],
+      [78, [["Binary Tree Level Order Traversal","binary-tree-level-order-traversal",102,"M"]], ""],
+      [79, [["Construct Binary Tree from Preorder and Inorder","construct-binary-tree-from-preorder-and-inorder-traversal",105,"M"]], ""],
+      [80, [["Design Add and Search Words","design-add-and-search-words-data-structure",211,"M"]], ""],
+      [81, [["Word Search II","word-search-ii",212,"H"]], ""]
+    ]],
+    ["Graphs", [
+      [82, [["Clone Graph","clone-graph",133,"M"]], ""],
+      [83, [["Pacific Atlantic Water Flow","pacific-atlantic-water-flow",417,"M"]], ""],
+      [84, [["Redundant Connection","redundant-connection",684,"M"]], "Union-find"],
+      [85, [["Word Ladder","word-ladder",127,"H"]], "BFS"],
+      [86, [["Network Delay Time","network-delay-time",743,"M"]], "Dijkstra"],
+      [87, [["Snakes and Ladders","snakes-and-ladders",909,"M"]], "Paytm asked a version once"]
+    ]],
+    ["Dynamic programming and greedy", [
+      [88, [["Climbing Stairs","climbing-stairs",70,"E"]], ""],
+      [89, [["House Robber II","house-robber-ii",213,"M"]], ""],
+      [90, [["Unique Paths","unique-paths",62,"M"]], ""],
+      [91, [["Jump Game","jump-game",55,"M"]], ""],
+      [92, [["Combination Sum IV","combination-sum-iv",377,"M"]], ""]
+    ]],
+    ["Intervals and heap", [
+      [93, [["Insert Interval","insert-interval",57,"M"]], ""],
+      [94, [["Non-overlapping Intervals","non-overlapping-intervals",435,"M"]], ""],
+      [95, [["Task Scheduler","task-scheduler",621,"M"]], ""]
+    ]],
+    ["Bit manipulation", [
+      [96, [["Number of 1 Bits","number-of-1-bits",191,"E"]], ""],
+      [97, [["Counting Bits","counting-bits",338,"E"]], ""],
+      [98, [["Missing Number","missing-number",268,"E"]], ""],
+      [99, [["Reverse Bits","reverse-bits",190,"E"]], ""],
+      [100, [["Sum of Two Integers","sum-of-two-integers",371,"M"]], ""]
+    ]]
+  ]}
+];
+
+// Company tags from 7,591 LeetCode Discuss interview posts across 25 companies (Nov 2026).
+const TAGS = {};
+`rotting-oranges=Amazon|Adobe|PhonePe|Paytm|Salesforce|Apple|Swiggy|Oracle|Walmart|Zomato|Flipkart|Zepto
+lru-cache=Oracle|Apple|Adobe|Microsoft|Salesforce|Meta|Swiggy|Amazon|Atlassian|Walmart|Flipkart|Paytm|Nvidia|Uber|Google|Zomato|CRED|Myntra|PhonePe|Razorpay
+linked-list-cycle=Paytm|Oracle|Adobe|Microsoft|Walmart|Amazon|Apple|Nvidia|Swiggy|Zomato|Razorpay|Myntra
+linked-list-cycle-ii=Atlassian
+reverse-linked-list=Adobe|Apple|Oracle|Nvidia|Microsoft|Salesforce|Zomato|Razorpay|Ola|Paytm
+reverse-nodes-in-k-group=Adobe|Apple|Salesforce|Walmart|Myntra
+trapping-rain-water=PhonePe|Apple|Paytm|Meta|Nvidia|Adobe|Oracle|Swiggy|Myntra|Google|Microsoft|Salesforce|Flipkart|Ola
+coin-change=Apple|Paytm|Microsoft|Oracle|Walmart|Swiggy|Google|Uber|Adobe|Salesforce|Flipkart|Razorpay|Zepto
+search-in-rotated-sorted-array=Amazon|Apple|Walmart|Microsoft|Nvidia|Oracle|Swiggy|PhonePe|Myntra|Paytm|Google|Adobe|Salesforce|Flipkart|Razorpay
+longest-substring-without-repeating-characters=Apple|Oracle|Walmart|Salesforce|Paytm|Adobe|Myntra|Google|Amazon|Microsoft|Nvidia|Atlassian|Swiggy|Flipkart|Ola
+maximum-subarray=Apple|Oracle|Swiggy|Nvidia|Paytm|Amazon|Atlassian|Adobe|Salesforce|Walmart|Zomato|Flipkart|PhonePe|Razorpay|Ola
+koko-eating-bananas=Flipkart|Paytm|Google|Salesforce|Zepto
+max-consecutive-ones-iii=Apple|Paytm
+longest-palindromic-subsequence=Apple|Adobe|Ola|Paytm
+lowest-common-ancestor-of-a-binary-tree=Atlassian|Meta|Adobe|Amazon|Oracle|Swiggy|Apple|Nvidia|Paytm|Google|Microsoft|Zepto|Myntra|Ola
+lowest-common-ancestor-of-a-binary-search-tree=Meta|Apple|Uber
+binary-tree-right-side-view=Walmart|Nvidia|Paytm|Meta|Microsoft|Apple|Uber|Adobe|Myntra
+binary-tree-zigzag-level-order-traversal=Amazon|Paytm|Meta|Microsoft|Apple|Adobe|Oracle|Walmart|Swiggy|Flipkart|Razorpay
+valid-parentheses=Apple|Adobe|Oracle|Zepto|Paytm|Google|Meta|Nvidia|Salesforce|Walmart|Swiggy|Microsoft
+search-a-2d-matrix-ii=Apple|Oracle|Paytm
+combination-sum=Apple|Microsoft|Oracle|Walmart|Zepto|Paytm
+subsets=Meta|Adobe
+insert-delete-getrandom-o1=Oracle|Uber|Amazon|Microsoft|Apple|Adobe|Walmart|Zomato|Flipkart|Paytm
+find-median-from-data-stream=Amazon|Apple|Adobe|Oracle|Walmart|Flipkart|Google|Uber|Salesforce|Meesho|Paytm
+course-schedule=Walmart|Paytm|Amazon|Meta|Apple|Google|Ola|Nvidia|Adobe|Salesforce|Zomato|Flipkart|Zepto|Myntra
+number-of-islands=Meta|Oracle|Amazon|Microsoft|Google|Apple|Salesforce|Walmart|Nvidia|Uber|Adobe|PhonePe|Zepto|Meesho|Swiggy
+max-area-of-island=Meta|Apple|Paytm
+unique-paths-ii=Oracle|Zepto|Ola
+all-nodes-distance-k-in-binary-tree=Flipkart|Meta|Apple|Adobe|Paytm
+binary-tree-maximum-path-sum=PhonePe|Salesforce|Oracle|Flipkart|Zepto|Amazon|Nvidia
+min-stack=Microsoft|Apple|Nvidia|Adobe|CRED|Salesforce|Walmart|Flipkart|PhonePe
+sort-colors=Walmart|Swiggy|Nvidia|Oracle|Flipkart|Microsoft|Apple|Adobe|PhonePe|Myntra|Paytm
+best-time-to-buy-and-sell-stock=Meta|Adobe|Amazon|Microsoft|Apple|Oracle|Walmart|Zepto|Nvidia|Salesforce|Swiggy|Flipkart|PhonePe|Myntra|Paytm
+subarray-sum-equals-k=Meta|Apple|Swiggy|Google|Oracle|Walmart|Flipkart|Zepto
+merge-k-sorted-lists=Apple|Swiggy|Amazon|Meta|Nvidia|Oracle|Google|Flipkart|Myntra
+intersection-of-two-linked-lists=Adobe|Apple|Nvidia|Salesforce
+add-two-numbers=Apple|Nvidia|Adobe|Oracle|PhonePe|Ola
+remove-nth-node-from-end-of-list=Apple|Nvidia
+find-first-and-last-position-of-element-in-sorted-array=Apple|Zepto|Google|Meta
+asteroid-collision=Oracle|Meesho|Myntra|Amazon|Microsoft|Adobe|Salesforce|Swiggy|Zepto|Paytm
+longest-palindromic-substring=Adobe|Apple|Google|Amazon|Meta|Oracle|PhonePe
+two-sum=Oracle|Meta|Amazon|Apple|Nvidia|Salesforce|Walmart|Swiggy|Paytm
+group-anagrams=Apple|Swiggy|Nvidia|Adobe|Salesforce|Oracle|Amazon|Microsoft|Atlassian|Flipkart
+top-k-frequent-elements=Meta|Apple|Oracle|Atlassian|Adobe|Flipkart
+product-of-array-except-self=Apple|Salesforce|Oracle|Ola
+longest-consecutive-sequence=Apple|Oracle|Google|Amazon|Atlassian|Myntra
+3sum=Meta|Oracle|Walmart|Apple|Adobe|Flipkart|Myntra|Swiggy|PhonePe|Paytm
+container-with-most-water=Apple|PhonePe|Zepto|Meesho
+longest-repeating-character-replacement=Uber|Google|Microsoft
+minimum-window-substring=Meta|Salesforce|Apple|Flipkart|Adobe|Oracle|Zomato|Razorpay
+merge-two-sorted-lists=Apple|Uber
+same-tree=Salesforce|Apple|Oracle
+subtree-of-another-tree=Paytm|Salesforce|Oracle
+validate-binary-search-tree=Meta|Adobe|Paytm|Apple|Nvidia|Atlassian|Zepto|Ola
+serialize-and-deserialize-binary-tree=Meta|Adobe|Amazon|Microsoft|Apple|Nvidia|Oracle
+kth-smallest-element-in-a-bst=Amazon|Adobe
+implement-trie-prefix-tree=Apple|Uber|Microsoft|Adobe|Oracle|Swiggy|Google|Meta|Atlassian|PhonePe|Nvidia|Salesforce|Amazon|Flipkart|Razorpay|Paytm|Walmart|Zomato|CRED
+house-robber=Apple|Adobe|Paytm|Salesforce|Oracle|Walmart|Swiggy|Amazon|Nvidia|Uber|Zomato|PhonePe|Myntra
+decode-ways=Apple|Uber|Atlassian|Salesforce|Walmart
+longest-increasing-subsequence=Oracle|PhonePe|Atlassian|Zepto|Google|Amazon|Apple|Walmart|Flipkart|Myntra
+longest-common-subsequence=Paytm|Atlassian
+word-break=Amazon|Meta|Apple|Walmart|Flipkart|Ola|Google|Salesforce|Myntra
+merge-intervals=Oracle|Meta|Walmart|Apple|Adobe|Salesforce|Swiggy|Amazon|Flipkart|PhonePe|Microsoft|Nvidia|Zomato|Zepto|Myntra
+kth-largest-element-in-an-array=Meta|Microsoft|Adobe|Salesforce|Paytm|Amazon|Nvidia|Uber|Atlassian|Oracle|Walmart|Zomato|Myntra
+contains-duplicate=Apple
+valid-anagram=Apple|Oracle|Paytm
+valid-palindrome=Meta|Apple
+palindromic-substrings=Microsoft|Apple|Adobe|Oracle
+maximum-product-subarray=Apple|Nvidia|Adobe|Salesforce|PhonePe
+next-permutation=Meta|Amazon|Oracle|Google|Atlassian|Adobe|Swiggy
+set-matrix-zeroes=Apple|Meta|Nvidia|Atlassian|Walmart|Flipkart|Myntra
+spiral-matrix=Apple|Microsoft|Walmart|Amazon|Nvidia|Uber|Atlassian|Adobe|Salesforce|Oracle|Swiggy|Paytm
+rotate-image=Apple|Paytm|Nvidia|Google|Adobe|Walmart|Flipkart
+word-search=Atlassian|Amazon|Zepto|Meta|Microsoft|Apple|Nvidia|Uber|Adobe|Oracle|Walmart|Flipkart|Paytm
+daily-temperatures=PhonePe|Amazon|Flipkart|Zepto|Nvidia|Salesforce|Swiggy
+largest-rectangle-in-histogram=Zepto|Google|Amazon|Meta|Apple|Adobe|Oracle|Walmart|Zomato|PhonePe|Myntra
+sliding-window-maximum=PhonePe|Uber|Google|Amazon|Apple|Adobe|Salesforce|Flipkart
+maximum-depth-of-binary-tree=Apple
+invert-binary-tree=Adobe|Apple
+binary-tree-level-order-traversal=Apple|Atlassian
+design-add-and-search-words-data-structure=Microsoft|Adobe|Oracle
+word-search-ii=Uber|Apple|Amazon|Zepto
+clone-graph=Meta
+pacific-atlantic-water-flow=Apple|Uber
+word-ladder=Apple|Amazon|Adobe|Meta|Flipkart|PhonePe|Zepto
+snakes-and-ladders=Microsoft|PhonePe|Swiggy|Salesforce|Oracle|Paytm
+climbing-stairs=Nvidia|Swiggy|Amazon|Apple|Uber|Adobe|Oracle|Zepto
+house-robber-ii=Adobe|Walmart|Apple|Oracle|Flipkart|Paytm
+unique-paths=Apple|Adobe|Amazon|Walmart|Zomato|PhonePe|Zepto|Meesho|Paytm
+jump-game=Walmart|Microsoft|Oracle|Apple|Uber|Salesforce|PhonePe|Myntra
+insert-interval=Adobe
+non-overlapping-intervals=Google|Walmart
+task-scheduler=Salesforce|Microsoft|Apple|Uber|Adobe|Oracle|Swiggy|Flipkart|PhonePe|CRED|Zepto
+missing-number=Apple|Myntra|Paytm|Amazon|Nvidia|Adobe|Oracle
+reverse-bits=Nvidia|Apple`.split("\n").forEach(l => { const [s, t] = l.split("="); TAGS[s] = t.split("|"); });
+
+const NEW_RAW = `252|Meeting Rooms|meeting-rooms|E|P|21|Uber|Oracle|Microsoft|Apple|PhonePe|Google|Amazon|Meta|Adobe|Salesforce|Swiggy|Flipkart|CRED|Zepto
+210|Course Schedule II|course-schedule-ii|M||19|Uber|Amazon|Apple|Salesforce|Oracle|Swiggy|Google|Microsoft|Nvidia|Flipkart|PhonePe|Meesho
+460|LFU Cache|lfu-cache|H||16|Salesforce|Apple|Adobe|Razorpay|Google|Microsoft|Uber|Atlassian|Oracle|Walmart|Paytm
+22|Generate Parentheses|generate-parentheses|M||15|Apple|Nvidia|Adobe|PhonePe|Google|Microsoft|Atlassian|Oracle|Walmart|Paytm
+496|Next Greater Element I|next-greater-element-i|E||15|Oracle|Amazon|Microsoft|Apple|Adobe|Salesforce|Walmart|Swiggy|PhonePe|Myntra
+17|Letter Combinations of a Phone Number|letter-combinations-of-a-phone-number|M||20|Meta|Apple|Zepto|Atlassian|Walmart|Microsoft|Uber|Swiggy|Myntra
+140|Word Break II|word-break-ii|H||9|Apple|Google|Amazon|Meta|Nvidia|Uber|Swiggy|Flipkart
+981|Time Based Key-Value Store|time-based-key-value-store|M||9|Oracle|Google|Microsoft|Apple|OpenAI|Uber|Atlassian|Salesforce
+122|Best Time to Buy and Sell Stock II|best-time-to-buy-and-sell-stock-ii|M||9|Adobe|Apple|Uber|Oracle|Walmart|PhonePe|Zepto|Myntra
+1236|Web Crawler|web-crawler|M|P|19|Atlassian|Meta|Apple|Anthropic|Adobe|Oracle|Zepto
+4|Median of Two Sorted Arrays|median-of-two-sorted-arrays|H||13|Apple|Oracle|Microsoft|Google|Adobe|PhonePe|Meesho
+162|Find Peak Element|find-peak-element|M||11|Meta|Apple|Myntra|Nvidia|Flipkart|Razorpay|Zepto
+138|Copy List with Random Pointer|copy-list-with-random-pointer|M||11|Meta|Microsoft|Nvidia|Apple|Adobe|Walmart|Swiggy
+41|First Missing Positive|first-missing-positive|H||11|Walmart|PhonePe|Myntra|Paytm|Apple|Salesforce|Oracle
+253|Meeting Rooms II|meeting-rooms-ii|M|P|10|Salesforce|Amazon|Google|Uber|Swiggy|PhonePe|CRED
+169|Majority Element|majority-element|E||9|Apple|Adobe|Microsoft|Nvidia|Oracle|Zomato|Paytm
+494|Target Sum|target-sum|M||8|Oracle|Microsoft|Adobe|Salesforce|Walmart|Myntra|Paytm
+45|Jump Game II|jump-game-ii|M||13|Adobe|PhonePe|Swiggy|Apple|Zepto|Paytm
+134|Gas Station|gas-station|M||8|PhonePe|Apple|Walmart|Swiggy|Flipkart|Zepto
+85|Maximal Rectangle|maximal-rectangle|H||7|Apple|Google|Microsoft|Salesforce|Razorpay|Zepto
+37|Sudoku Solver|sudoku-solver|H||7|Apple|Google|Amazon|Uber|Adobe|Salesforce
+227|Basic Calculator II|basic-calculator-ii|M||18|Meta|Apple|Oracle|Google|Atlassian
+269|Alien Dictionary|alien-dictionary|H|P|14|Uber|Swiggy|Adobe|Flipkart|Razorpay
+224|Basic Calculator|basic-calculator|H||12|Meta|Oracle|Amazon|Atlassian|Adobe
+543|Diameter of Binary Tree|diameter-of-binary-tree|E||12|Meta|Microsoft|Apple|PhonePe|Amazon
+706|Design HashMap|design-hashmap|E||9|Apple|Nvidia|Atlassian|Walmart|Paytm
+394|Decode String|decode-string|M||8|Apple|Google|Adobe|Salesforce|PhonePe
+332|Reconstruct Itinerary|reconstruct-itinerary|H||8|Uber|Amazon|Salesforce|Flipkart|PhonePe
+287|Find the Duplicate Number|find-the-duplicate-number|M||8|Apple|Oracle|Swiggy|Microsoft|PhonePe
+767|Reorganize String|reorganize-string|M||7|Microsoft|Oracle|Amazon|Salesforce|Flipkart
+64|Minimum Path Sum|minimum-path-sum|M||6|Apple|Amazon|Nvidia|Uber|Zepto
+692|Top K Frequent Words|top-k-frequent-words|M||6|Adobe|Amazon|Apple|Salesforce|Oracle
+221|Maximal Square|maximal-square|M||6|Apple|Nvidia|Salesforce|Razorpay|Myntra
+32|Longest Valid Parentheses|longest-valid-parentheses|H||6|Oracle|Apple|Salesforce|Swiggy|PhonePe
+410|Split Array Largest Sum|split-array-largest-sum|H||5|Google|Apple|Nvidia|PhonePe|Zepto
+136|Single Number|single-number|E||5|Microsoft|Apple|Nvidia|Adobe|Oracle
+151|Reverse Words in a String|reverse-words-in-a-string|M||5|Microsoft|Apple|Nvidia|Oracle|Paytm
+528|Random Pick with Weight|random-pick-with-weight|M||14|Meta|Apple|Google|Uber
+1249|Minimum Remove to Make Valid Parentheses|minimum-remove-to-make-valid-parentheses|M||13|Meta|Oracle|Salesforce|Walmart
+1235|Maximum Profit in Job Scheduling|maximum-profit-in-job-scheduling|H||13|PhonePe|Swiggy|Atlassian|Salesforce
+973|K Closest Points to Origin|k-closest-points-to-origin|M||12|Meta|Uber|Adobe|Oracle
+815|Bus Routes|bus-routes|H||11|Uber|Amazon|Oracle|Zepto
+1438|Longest Continuous Subarray With Absolute Diff â‰¤ Limit|longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit|M||10|Uber|Meta|Oracle|PhonePe
+71|Simplify Path|simplify-path|M||9|Meta|Apple|Atlassian|Oracle
+337|House Robber III|house-robber-iii|M||8|PhonePe|Amazon|Oracle|Myntra
+88|Merge Sorted Array|merge-sorted-array|E||8|Meta|Apple|Nvidia|Atlassian
+12|Integer to Roman|integer-to-roman|M||8|Apple|Oracle|Atlassian|Swiggy
+415|Add Strings|add-strings|E||7|Meta|Apple|Nvidia|Oracle
+921|Minimum Add to Make Parentheses Valid|minimum-add-to-make-parentheses-valid|M||7|Meta|Oracle|Walmart|Paytm
+721|Accounts Merge|accounts-merge|M||7|PhonePe|Meta|Apple|CRED
+716|Max Stack|max-stack|H|P|7|Microsoft|Apple|Salesforce|Walmart
+36|Valid Sudoku|valid-sudoku|M||7|Apple|Microsoft|Nvidia|Uber
+329|Longest Increasing Path in a Matrix|longest-increasing-path-in-a-matrix|H||7|PhonePe|Myntra|Apple|Uber
+14|Longest Common Prefix|longest-common-prefix|E||7|Apple|Nvidia|Salesforce|Oracle
+787|Cheapest Flights Within K Stops|cheapest-flights-within-k-stops|M||6|Apple|Uber|Oracle|Myntra
+40|Combination Sum II|combination-sum-ii|M||6|Oracle|Zepto|Salesforce|Flipkart
+72|Edit Distance|edit-distance|M||5|Google|Microsoft|Apple|Swiggy
+438|Find All Anagrams in a String|find-all-anagrams-in-a-string|M||5|Apple|Amazon|Adobe|Walmart
+8|String to Integer (atoi)|string-to-integer-atoi|M||5|Nvidia|Meta|Apple|Atlassian
+947|Most Stones Removed with Same Row or Column|most-stones-removed-with-same-row-or-column|M||5|PhonePe|Microsoft|Adobe|Myntra
+895|Maximum Frequency Stack|maximum-frequency-stack|H||5|Apple|Microsoft|Salesforce|PhonePe
+123|Best Time to Buy and Sell Stock III|best-time-to-buy-and-sell-stock-iii|H||5|Adobe|Apple|PhonePe|Myntra
+1032|Stream of Characters|stream-of-characters|H||4|Google|Microsoft|Uber|Adobe
+1011|Capacity To Ship Packages Within D Days|capacity-to-ship-packages-within-d-days|M||4|Amazon|Adobe|Flipkart|PhonePe
+348|Design Tic-Tac-Toe|design-tic-tac-toe|M|P|4|Meta|Microsoft|Apple|Zepto
+149|Max Points on a Line|max-points-on-a-line|H||4|Meta|Apple|Nvidia|Uber
+284|Peeking Iterator|peeking-iterator|M||4|Microsoft|Apple|Atlassian|Adobe
+540|Single Element in a Sorted Array|single-element-in-a-sorted-array|M||4|Microsoft|Apple|Atlassian|PhonePe
+283|Move Zeroes|move-zeroes|E||17|Meta|Apple|Walmart
+987|Vertical Order Traversal of a Binary Tree|vertical-order-traversal-of-a-binary-tree|H||9|Meta|Amazon|Salesforce
+312|Burst Balloons|burst-balloons|H||6|PhonePe|Google|Apple
+1091|Shortest Path in Binary Matrix|shortest-path-in-binary-matrix|M||6|Meta|Oracle|Walmart
+362|Design Hit Counter|design-hit-counter|M|P|6|Apple|Uber|Atlassian
+92|Reverse Linked List II|reverse-linked-list-ii|M||6|Apple|Nvidia|Flipkart
+2035|Partition Array Into Two Arrays to Minimize Sum Difference|partition-array-into-two-arrays-to-minimize-sum-difference|H||6|Nvidia|Salesforce|Swiggy
+10|Regular Expression Matching|regular-expression-matching|H||5|Apple|Google|Oracle
+402|Remove K Digits|remove-k-digits|M||5|PhonePe|Amazon|Walmart
+1245|Tree Diameter|tree-diameter|M|P|5|Salesforce|Meta|CRED
+1209|Remove All Adjacent Duplicates in String II|remove-all-adjacent-duplicates-in-string-ii|M||5|Apple|Salesforce|Meesho
+7|Reverse Integer|reverse-integer|M||5|Apple|Nvidia|Paytm
+968|Binary Tree Cameras|binary-tree-cameras|H||5|PhonePe|OpenAI|Oracle
+1094|Car Pooling|car-pooling|M||4|Flipkart|Google|Ola
+1101|The Earliest Moment When Everyone Become Friends|the-earliest-moment-when-everyone-become-friends|M|P|4|Uber|Google|Flipkart
+803|Bricks Falling When Hit|bricks-falling-when-hit|H||4|PhonePe|Google|Atlassian
+38|Count and Say|count-and-say|M||4|Meta|Apple|Nvidia
+547|Number of Provinces|number-of-provinces|M||4|Swiggy|Microsoft|PhonePe
+403|Frog Jump|frog-jump|H||4|PhonePe|Apple|Flipkart
+101|Symmetric Tree|symmetric-tree|E||4|Oracle|Apple|Paytm
+2385|Amount of Time for Binary Tree to Be Infected|amount-of-time-for-binary-tree-to-be-infected|M||4|PhonePe|Adobe|Flipkart
+983|Minimum Cost For Tickets|minimum-cost-for-tickets|M||4|Zepto|Flipkart|Meesho
+946|Validate Stack Sequences|validate-stack-sequences|M||3|Google|Microsoft|Nvidia
+752|Open the Lock|open-the-lock|M||3|Google|Adobe|Oracle
+979|Distribute Coins in Binary Tree|distribute-coins-in-binary-tree|M||3|Amazon|Apple|PhonePe
+205|Isomorphic Strings|isomorphic-strings|E||3|Amazon|Microsoft|Oracle
+218|The Skyline Problem|the-skyline-problem|H||3|Amazon|Nvidia|Salesforce
+827|Making A Large Island|making-a-large-island|H||3|Meta|Uber|Meesho
+409|Longest Palindrome|longest-palindrome|E||3|Meta|Atlassian|Adobe
+934|Shortest Bridge|shortest-bridge|M||3|Meta|Flipkart|PhonePe
+189|Rotate Array|rotate-array|M||3|Microsoft|Apple|Paytm
+315|Count of Smaller Numbers After Self|count-of-smaller-numbers-after-self|H||3|Apple|Oracle|Paytm
+46|Permutations|permutations|M||3|Apple|Atlassian|Paytm
+237|Delete Node in a Linked List|delete-node-in-a-linked-list|M||3|Apple|Nvidia|Ola
+188|Best Time to Buy and Sell Stock IV|best-time-to-buy-and-sell-stock-iv|H||3|Apple|Nvidia|Adobe
+443|String Compression|string-compression|M||3|Apple|Salesforce|Oracle
+939|Minimum Area Rectangle|minimum-area-rectangle|M||3|Nvidia|Oracle|Flipkart
+1326|Minimum Number of Taps to Open to Water a Garden|minimum-number-of-taps-to-open-to-water-a-garden|H||3|Uber|PhonePe|Meesho
+741|Cherry Pickup|cherry-pickup|H||3|Uber|Swiggy|PhonePe
+841|Keys and Rooms|keys-and-rooms|M||3|Atlassian|Oracle|Walmart
+328|Odd Even Linked List|odd-even-linked-list|M||3|Walmart|Meesho|Paytm`;
+{
+  const buckets = { t6: [], t7: [], t8: [] };
+  let n = 101;
+  NEW_RAW.split("\n").forEach(l => {
+    const [lc, title, slug, d, paid, posts, ...cos] = l.split("|");
+    TAGS[slug] = cos;
+    const note = `In ${posts} posts` + (paid ? " Â· LeetCode Premium" : "");
+    const entry = [0, [[title, slug, +lc, d]], note];
+    (cos.length >= 5 ? buckets.t6 : cos.length === 4 ? buckets.t7 : buckets.t8).push(entry);
+  });
+  ["t6", "t7", "t8"].forEach(k => buckets[k].forEach(e => { e[0] = n++; }));
+  TIERS.push(
+    { id: "t6", title: "Cross-company: asked at 5+ companies", note: "Not yet on your list above, ranked by how many of the 25 companies asked it.", items: buckets.t6 },
+    { id: "t7", title: "Cross-company: asked at 4 companies", note: "Lower priority.", items: buckets.t7 },
+    { id: "t8", title: "Cross-company: asked at 3 companies", note: "Lowest priority. Do these last.", items: buckets.t8 }
+  );
+}
+const PAYTM_TIERS = new Set(["t1", "t2", "t3"]);
+
+const STORE_KEY = "paytm-dsa-done-v1";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { done = {}; }
+
+const allIds = [];
+function rowHtml(entry, tierId) {
+  const [n, probs, note] = entry;
+  allIds.push(n);
+  const cos = new Set();
+  if (PAYTM_TIERS.has(tierId)) cos.add("Paytm");
+  probs.forEach(p => (TAGS[p[1]] || []).forEach(c => cos.add(c)));
+  const coList = [...cos];
+  const chips = coList.length
+    ? `<span class="cos" title="Companies whose interview posts mention it">${coList.map(c => `<span class="co">${c}</span>`).join("")}</span>`
+    : "";
+  const names = probs.map(([title, slug]) => slug
+    ? `<a href="https://leetcode.com/problems/${slug}/" target="_blank" rel="noopener">${title}</a>`
+    : title).join(" Â· ");
+  const lcs = probs.filter(p => p[2]).map(p => `<span class="lc">LC ${p[2]}</span> <span class="diff ${p[3]}">${p[3]}</span>`).join(" ");
+  return `<li class="item" data-id="${n}" data-cos="|${coList.join("|")}|">
+    <input type="checkbox" id="cb-${n}" aria-label="Mark problem ${n} solved">
+    <span class="num">${n}</span>
+    <div class="body">
+      <span class="name">${names}</span>
+      <span class="meta">${lcs}${note ? `<span class="note">${note}</span>` : ""}</span>
+      ${chips}
+    </div>
+  </li>`;
+}
+function tierCountId(t) { return "count-" + t.id; }
+document.getElementById("tiers").innerHTML = TIERS.map(t => {
+  const row = e => rowHtml(e, t.id);
+  const inner = t.items
+    ? `<ul class="list">${t.items.map(row).join("")}</ul>`
+    : t.groups.map(([g, items]) => `<h3>${g}</h3><ul class="list">${items.map(row).join("")}</ul>`).join("");
+  return `<section class="tier" id="${t.id}">
+    <div class="tier-head"><h2>${t.title}</h2><span class="tier-count" id="${tierCountId(t)}"></span></div>
+    <p class="tier-note">${t.note}</p>${inner}</section>`;
+}).join("");
+document.getElementById("totalCount").textContent = allIds.length;
+
+const hideDone = document.getElementById("hideDone");
+const coFilter = document.getElementById("coFilter");
+{
+  const counts = {};
+  Object.values(TAGS).forEach(cs => cs.forEach(c => counts[c] = (counts[c] || 0) + 1));
+  Object.keys(counts).sort().forEach(c => {
+    const o = document.createElement("option"); o.value = c; o.textContent = c; coFilter.appendChild(o);
+  });
+}
+function render() {
+  let total = 0;
+  const co = coFilter.value;
+  document.querySelectorAll("li.item").forEach(li => {
+    const id = li.dataset.id;
+    const on = !!done[id];
+    li.querySelector("input").checked = on;
+    li.classList.toggle("is-done", on);
+    li.hidden = (hideDone.checked && on) || (co && !li.dataset.cos.includes("|" + co + "|"));
+    if (on) total++;
+  });
+  document.querySelectorAll("section.tier").forEach(sec => {
+    sec.hidden = !!co && !sec.querySelector("li.item:not([hidden])");
+  });
+  document.querySelectorAll("section.tier h3").forEach(h => {
+    const ul = h.nextElementSibling;
+    const hide = !!co && !ul.querySelector("li.item:not([hidden])");
+    h.hidden = hide; ul.hidden = hide;
+  });
+  document.getElementById("doneCount").textContent = total;
+  document.getElementById("barFill").style.width = (100 * total / allIds.length) + "%";
+  TIERS.forEach(t => {
+    const sec = document.getElementById(t.id);
+    const ids = [...sec.querySelectorAll("li.item")].map(li => li.dataset.id);
+    const d = ids.filter(i => done[i]).length;
+    document.getElementById(tierCountId(t)).textContent = `${d} / ${ids.length}`;
+  });
+}
+
+// Saving: always mirror to this browser; sync to the account store when available.
+const syncEl = document.getElementById("syncStatus");
+let docRef = null, writing = false, pending = false;
+async function pushRemote() {
+  if (!docRef) return;
+  if (writing) { pending = true; return; }
+  writing = true;
+  try {
+    await docRef.set({ done: { ...done }, updatedAt: new Date().toISOString() });
+    syncEl.textContent = "Synced to your account";
+  } catch (e) {
+    syncEl.textContent = "Couldn't sync; saved on this device";
+  }
+  writing = false;
+  if (pending) { pending = false; pushRemote(); }
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(done)); } catch (e) {}
+  pushRemote();
+}
+
+document.getElementById("tiers").addEventListener("change", e => {
+  const li = e.target.closest("li.item");
+  if (!li) return;
+  if (e.target.checked) done[li.dataset.id] = true; else delete done[li.dataset.id];
+  render(); save();
+});
+coFilter.addEventListener("change", render);
+hideDone.addEventListener("change", () => {
+  render();
+  try { localStorage.setItem(STORE_KEY + "-hide", hideDone.checked ? "1" : ""); } catch (e) {}
+});
+try { hideDone.checked = !!localStorage.getItem(STORE_KEY + "-hide"); } catch (e) {}
+
+const resetBtn = document.getElementById("resetBtn");
+let armTimer = null;
+resetBtn.addEventListener("click", () => {
+  if (!resetBtn.classList.contains("armed")) {
+    resetBtn.classList.add("armed"); resetBtn.textContent = "Tap again to clear all";
+    armTimer = setTimeout(() => { resetBtn.classList.remove("armed"); resetBtn.textContent = "Reset all"; }, 4000);
+    return;
+  }
+  clearTimeout(armTimer);
+  resetBtn.classList.remove("armed"); resetBtn.textContent = "Reset all";
+  done = {}; render(); save();
+});
+
+render();
+
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db || !user) return;
+    const uid = await user.id();
+    if (!uid) return;
+    docRef = db.doc("data/users/" + uid + "/progress");
+    syncEl.textContent = "Connectingâ€¦";
+    let first = true;
+    const timer = setTimeout(() => { if (first) syncEl.textContent = "Account sync not reachable yet; saved on this device"; }, 10000);
+    docRef.onSnapshot(snap => {
+      const remote = snap.exists ? (snap.data().done || {}) : null;
+      if (first && !snap.metadata.fromCache) {
+        first = false; clearTimeout(timer);
+        if (remote === null) {
+          // First visit with sync: carry over anything ticked on this device.
+          if (Object.keys(done).length) pushRemote(); else syncEl.textContent = "Synced to your account";
+          return;
+        }
+        syncEl.textContent = "Synced to your account";
+      }
+      if (remote && !snap.metadata.hasPendingWrites && !writing && !pending) {
+        done = { ...remote };
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(done)); } catch (e) {}
+        render();
+      }
+    }, () => { clearTimeout(timer); syncEl.textContent = "Saved on this device"; docRef = null; });
+  } catch (e) { /* stay on device storage */ }
+})();
+</script>
+
+</body></html>
