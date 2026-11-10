@@ -114,14 +114,14 @@ button.reset.armed { color: var(--hard); border-color: var(--hard); }
 </header>
 
 <main class="wrap">
-  <p class="intro">Paytm's own repeated questions come first, ranked from about 180 interview reports (2019â€“2026). Then come Blind 75 problems, then problems asked across 25 companies (FAANG, Nvidia, OpenAI, Uber, Swiggy, Flipkart, PhonePe and more). Company tags come from 7,591 LeetCode Discuss interview posts read in Nov 2026; a missing tag means no post mentioned it, not that the company never asks it. Tap a name to open it on LeetCode.</p>
+  <p class="intro">Paytm's own repeated questions come first, ranked from about 180 interview reports (2019–2026). Then come Blind 75 problems, then problems asked across 25 companies (FAANG, Nvidia, OpenAI, Uber, Swiggy, Flipkart, PhonePe and more). Company tags come from 7,591 LeetCode Discuss interview posts read in Nov 2026; a missing tag means no post mentioned it, not that the company never asks it. Tap a name to open it on LeetCode.</p>
   <div id="tiers"></div>
 </main>
 
 <script>
 const TIERS = [
   { id: "t1", title: "Paytm Tier 1", note: "Asked across many years and still asked. Know these cold.", items: [
-    [1, [["Rotting Oranges","rotting-oranges",994,"M"]], "7 reports, 2022â€“2026"],
+    [1, [["Rotting Oranges","rotting-oranges",994,"M"]], "7 reports, 2022–2026"],
     [2, [["LRU Cache","lru-cache",146,"M"]], "Full working code, then make it thread-safe"],
     [3, [["Linked List Cycle","linked-list-cycle",141,"E"],["Linked List Cycle II","linked-list-cycle-ii",142,"M"]], "Loop length, removal, why steps 1&3 work"],
     [4, [["Reverse Linked List","reverse-linked-list",206,"E"],["Reverse Nodes in k-Group","reverse-nodes-in-k-group",25,"H"]], "Iterative and recursive"],
@@ -402,7 +402,7 @@ const NEW_RAW = `252|Meeting Rooms|meeting-rooms|E|P|21|Uber|Oracle|Microsoft|Ap
 1235|Maximum Profit in Job Scheduling|maximum-profit-in-job-scheduling|H||13|PhonePe|Swiggy|Atlassian|Salesforce
 973|K Closest Points to Origin|k-closest-points-to-origin|M||12|Meta|Uber|Adobe|Oracle
 815|Bus Routes|bus-routes|H||11|Uber|Amazon|Oracle|Zepto
-1438|Longest Continuous Subarray With Absolute Diff â‰¤ Limit|longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit|M||10|Uber|Meta|Oracle|PhonePe
+1438|Longest Continuous Subarray With Absolute Diff ≤ Limit|longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit|M||10|Uber|Meta|Oracle|PhonePe
 71|Simplify Path|simplify-path|M||9|Meta|Apple|Atlassian|Oracle
 337|House Robber III|house-robber-iii|M||8|PhonePe|Amazon|Oracle|Myntra
 88|Merge Sorted Array|merge-sorted-array|E||8|Meta|Apple|Nvidia|Atlassian
@@ -475,7 +475,7 @@ const NEW_RAW = `252|Meeting Rooms|meeting-rooms|E|P|21|Uber|Oracle|Microsoft|Ap
   NEW_RAW.split("\n").forEach(l => {
     const [lc, title, slug, d, paid, posts, ...cos] = l.split("|");
     TAGS[slug] = cos;
-    const note = `In ${posts} posts` + (paid ? " Â· LeetCode Premium" : "");
+    const note = `In ${posts} posts` + (paid ? " · LeetCode Premium" : "");
     const entry = [0, [[title, slug, +lc, d]], note];
     (cos.length >= 5 ? buckets.t6 : cos.length === 4 ? buckets.t7 : buckets.t8).push(entry);
   });
@@ -505,7 +505,7 @@ function rowHtml(entry, tierId) {
     : "";
   const names = probs.map(([title, slug]) => slug
     ? `<a href="https://leetcode.com/problems/${slug}/" target="_blank" rel="noopener">${title}</a>`
-    : title).join(" Â· ");
+    : title).join(" · ");
   const lcs = probs.filter(p => p[2]).map(p => `<span class="lc">LC ${p[2]}</span> <span class="diff ${p[3]}">${p[3]}</span>`).join(" ");
   return `<li class="item" data-id="${n}" data-cos="|${coList.join("|")}|">
     <input type="checkbox" id="cb-${n}" aria-label="Mark problem ${n} solved">
@@ -624,7 +624,7 @@ render();
     const uid = await user.id();
     if (!uid) return;
     docRef = db.doc("data/users/" + uid + "/progress");
-    syncEl.textContent = "Connectingâ€¦";
+    syncEl.textContent = "Connecting…";
     let first = true;
     const timer = setTimeout(() => { if (first) syncEl.textContent = "Account sync not reachable yet; saved on this device"; }, 10000);
     docRef.onSnapshot(snap => {
